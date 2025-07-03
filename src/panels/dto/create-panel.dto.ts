@@ -1,4 +1,27 @@
-import { IsNotEmpty, IsOptional, IsNumber, IsString } from 'class-validator';
+// create-panel.dto.ts
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+class LocationDto {
+  @IsString()
+  @IsNotEmpty()
+  street: string;
+
+  @IsString()
+  @IsNotEmpty()
+  lat: string;
+
+  @IsString()
+  @IsNotEmpty()
+  long: string;
+}
 
 export class CreatePanelDto {
   @IsString()
@@ -9,9 +32,11 @@ export class CreatePanelDto {
   @IsNumber()
   groupId?: number;
 
-  @IsNumber()
-  tenantId: number;
+  @IsOptional()
+  @IsBoolean()
+  online?: boolean;
 
-  @IsNumber()
-  locationId: number;
+  @ValidateNested()
+  @Type(() => LocationDto)
+  location: LocationDto;
 }

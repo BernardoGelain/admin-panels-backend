@@ -3,12 +3,12 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   Request,
   UseGuards,
   Query,
+  Put,
 } from '@nestjs/common';
 import { PanelsService } from './panels.service';
 import { CreatePanelDto } from './dto/create-panel.dto';
@@ -21,7 +21,7 @@ import { User } from 'src/users/entities/user.entity';
 export class PanelsController {
   constructor(private readonly panelsService: PanelsService) {}
 
-  @Post('create')
+  @Post('')
   create(@Body() dto: CreatePanelDto, @Request() req: { user: User }) {
     return this.panelsService.create(dto, req.user);
   }
@@ -35,7 +35,7 @@ export class PanelsController {
     return this.panelsService.findAll(req.user, +page, +pageSize);
   }
 
-  @Get('details/:id')
+  @Get('/:id')
   findOne(@Param('id') id: string, @Request() req: { user: User }) {
     return this.panelsService.findOne(+id, req.user);
   }
@@ -46,7 +46,7 @@ export class PanelsController {
     return this.panelsService.getSummary(req.user);
   }
 
-  @Patch('update/:id')
+  @Put('/:id')
   update(
     @Param('id') id: string,
     @Body() dto: UpdatePanelDto,

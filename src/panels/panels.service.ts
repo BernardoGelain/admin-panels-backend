@@ -22,19 +22,18 @@ export class PanelsService {
   ) {}
 
   async create(dto: CreatePanelDto, user: User) {
-    const location = await this.locationRepository.findOne({
-      where: { id: dto.locationId },
+    const { location, ...panelData } = dto;
+
+    const savedLocation = await this.locationRepository.save({
+      street: location.street,
+      lat: location.lat,
+      long: location.long,
     });
 
-    if (!location) {
-      throw new NotFoundException('Localização não encontrada');
-    }
-
     const panel = this.panelRepository.create({
-      name: dto.name,
-      groupId: dto.groupId,
+      ...panelData,
       tenantId: user.tenantId,
-      location,
+      locationId: savedLocation.id,
     });
 
     return this.panelRepository.save(panel);
@@ -82,27 +81,28 @@ export class PanelsService {
       relations: ['location'],
     });
 
-    if (!panel) {
-      throw new NotFoundException('Painel não encontrado');
+    if (!panel) throw new NotFoundException('Painel não encontrado.');
+    if (panel.tenantId !== user.tenantId) {
+      throw new ForbiddenException(
+        'Você não tem permissão para editar este painel.',
+      );
     }
 
-    if (!user.isSuperuser && panel.tenantId !== user.tenantId) {
-      throw new ForbiddenException('Acesso negado ao painel');
+    // Atualiza campos do painel
+    if (dto.name !== undefined) panel.name = dto.name;
+    if (dto.online !== undefined) panel.online = dto.online;
+    if (dto.groupId !== undefined) panel.groupId = dto.groupId;
+
+    // Atualiza localização vinculada
+    if (dto.location) {
+      if (dto.location.street !== undefined)
+        panel.location.street = dto.location.street;
+      if (dto.location.lat !== undefined) panel.location.lat = dto.location.lat;
+      if (dto.location.long !== undefined)
+        panel.location.long = dto.location.long;
     }
 
-    if (dto.locationId) {
-      const location = await this.locationRepository.findOneBy({
-        id: dto.locationId,
-      });
-
-      if (!location) {
-        throw new NotFoundException('Nova localização não encontrada');
-      }
-
-      panel.location = location;
-    }
-
-    Object.assign(panel, dto);
+    await this.locationRepository.save(panel.location);
     return this.panelRepository.save(panel);
   }
 
