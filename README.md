@@ -1,137 +1,51 @@
-# 🛠️ Backend Marcante
+# Marcante API
 
-Este é o backend do projeto **Marcante**, construído com **NestJS**, **TypeORM** e **PostgreSQL**.
+NestJS API for the [Marcante admin console](https://github.com/BernardoGelain/admin-panels). It stores users, panels, and locations in PostgreSQL and protects panel routes with JWT.
 
----
+## What it is
 
-## ✅ Passo a passo para rodar o projeto
+REST API for signing in and for creating, listing, updating, and deleting panels. Each panel keeps a location (street and coordinates) and an online flag. List responses are paginated.
 
-### 1. Clone o repositório e instale as dependências
+## Why it exists
 
-```bash
-git clone https://github.com/bernardogelain/backend-marcante.git
-cd backend-marcante
-npm install
-```
+The console needs a tenant boundary. A superuser can read every panel. Any other user only receives panels for their own `tenantId`.
 
----
+## Highlights
 
-### 2. Configure o ambiente
+- JWT is issued at login and read from `Authorization: Bearer`.
+- Panel queries filter by `tenantId` unless `isSuperuser` is set.
+- Creating a panel saves the location first, then the panel.
+- `GET /panels/summary` returns online, offline, and total counts.
+- Schema changes are TypeORM migrations. Jest specs cover the auth, user, panel, and message modules.
 
-Crie um arquivo `.env` na raiz com o seguinte conteúdo:
+Group and message controllers are still the Nest scaffolding. They do not persist records.
+
+## Tech
+
+NestJS, TypeScript, TypeORM, PostgreSQL, Passport JWT
+
+## Running locally
+
+Requirements: Node.js 18 and PostgreSQL.
+
+Create a database, then a `.env` in the repository root:
 
 ```ini
 DATABASE_HOST=localhost
 DATABASE_PORT=5432
 DATABASE_USER=postgres
-DATABASE_PASSWORD=pass
+DATABASE_PASSWORD=
 DATABASE_NAME=marcante
-JWT_SECRET=sua_chave_secreta
+JWT_SECRET=
 ```
 
-> 🔐 Você pode gerar uma chave JWT em sites como [jwt.io](https://jwt.io) ou usar um UUID como valor.
-
----
-
-### 3. Instale e configure o PostgreSQL
-
-#### 🔵 macOS (via Homebrew)
+Use your own database password and a long random `JWT_SECRET`. Do not commit `.env`.
 
 ```bash
-brew install postgresql
-brew services start postgresql
-createdb marcante
-```
-
-#### 🟢 Ubuntu/Debian
-
-```bash
-sudo apt update
-sudo apt install postgresql postgresql-contrib
-sudo -u postgres createdb marcante
-```
-
-#### 🟠 Windows
-
-Baixe o instalador oficial:  
-👉 https://www.postgresql.org/download/windows  
-Depois, crie o banco de dados chamado `marcante`.
-
----
-
-### 4. Execute as migrations
-
-```bash
-npm run typeorm migration:run -- -d src/ormconfig.ts
-```
-
----
-
-### 5. Execute as seeds
-
-```bash
+npm install
+npm run migration:run
 npm run seed
-```
-
-> Isso irá popular o banco com usuários e painéis fictícios para testes.
-
----
-
-### 6. Inicie o servidor
-
-```bash
 npm run start:dev
 ```
 
-Servidor rodando em:  
-➡️ `http://localhost:3000`
-
----
-
-## 🔐 Autenticação
-
-A autenticação é baseada em **JWT**.
-
-Após o login, inclua o token nas requisições protegidas como:
-
-```http
-Authorization: Bearer <seu_token>
-```
-
-#### 🔎 Exemplo de rota protegida:
-
-```http
-GET http://localhost:3000/users/whoami
-```
-
----
-
-## 📁 Estrutura do Projeto
-
-```
-src/
-├── auth/         # Autenticação JWT
-├── users/        # Usuários e perfis
-├── panels/       # Painéis georreferenciados
-├── locations/    # Localizações com coordenadas
-├── seeds/        # Arquivos de seed para popular o banco
-├── migrations/   # Migrations TypeORM
-└── ormconfig.ts  # Configuração do TypeORM
-```
-
----
-
-## 🧪 Comandos úteis
-
-| Comando                                                | Descrição                      |
-| ------------------------------------------------------ | ------------------------------ |
-| `npm run start:dev`                                    | Inicia a aplicação em modo dev |
-| `npm run seed`                                         | Executa os seeds               |
-| `npm run typeorm migration:run -d src/ormconfig.ts`    | Roda as migrations             |
-| `npm run typeorm migration:revert -d src/ormconfig.ts` | Reverte a última migration     |
-
----
-
-## ✅ Pronto!
-
-Agora você já pode desenvolver, testar e interagir com a API REST de forma segura, organizada e com dados simulados 🎯
+The API listens on [http://localhost:3000](http://localhost:3000). `npm run seed` inserts sample users and panels so the console has something to list. The admin web app expects this URL.
